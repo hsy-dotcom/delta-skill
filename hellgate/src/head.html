@@ -1,0 +1,150 @@
+<title>지옥문 기지</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Nanum+Gothic+Coding:wght@400;700&display=swap">
+<style>
+/* 단일 세계관(어두운 지옥 기지)으로 고정한 디자인: 테마 전환 없이 모든 색을 명시한다. */
+:root{
+  --void:#0c0807; --rust:#4a1a0e; --blood:#c42a1c; --digit:#e5412a;
+  --ember:#f29a2e; --bone:#ecdfc6; --ash:#8c7e6c; --steel:#3a3632; --steel-hi:#5d5650; --steel-lo:#1c1816;
+  color-scheme:dark;
+}
+html,body{height:100%}
+[hidden]{display:none!important}
+body{background:var(--void);color:var(--bone);font-family:"Nanum Gothic Coding",ui-monospace,Menlo,Consolas,monospace;overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:none}
+#game{height:100%;display:flex;flex-direction:column}
+#view{position:relative;flex:1;min-height:0;background:#000;overflow:hidden;cursor:crosshair}
+#screen{position:absolute;inset:0;width:100%;height:100%;display:block}
+#cross{position:absolute;left:50%;top:50%;width:4px;height:4px;margin:-2px 0 0 -2px;background:rgba(236,223,198,.75);box-shadow:0 0 0 1px rgba(0,0,0,.6);pointer-events:none}
+#msg{position:absolute;left:16px;top:12px;right:16px;display:flex;flex-direction:column;gap:4px;pointer-events:none;font-weight:700;font-size:14px;color:var(--ember);text-shadow:1px 1px 0 #000,0 0 6px rgba(0,0,0,.8)}
+#msg div{animation:msgIn .15s ease-out}
+@keyframes msgIn{from{transform:translateX(-6px);opacity:.3}to{transform:none;opacity:1}}
+#perf{position:absolute;right:16px;top:12px;font-size:11px;color:var(--ash);text-shadow:1px 1px 0 #000;pointer-events:none}
+
+/* HUD — 리벳 박힌 강철 패널 위의 붉은 계기 숫자 */
+#hud{flex:none;display:flex;align-items:stretch;justify-content:center;padding:6px 16px calc(6px + env(safe-area-inset-bottom,0px));
+  background:
+    radial-gradient(circle at 10px 8px,#7a716a 0 1.5px,#231e1b 2px,transparent 2.6px) 0 0/calc(100% - 20px) 100% no-repeat,
+    repeating-linear-gradient(90deg,rgba(255,255,255,.018) 0 2px,rgba(0,0,0,.03) 2px 5px),
+    linear-gradient(180deg,var(--steel-hi) 0,var(--steel) 14%,#2c2825 70%,#231f1c 100%);
+  border-top:3px solid var(--steel-lo);box-shadow:inset 0 1px 0 #736a62}
+.cell{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:2px clamp(8px,2.2vw,22px);border-left:2px solid var(--steel-lo);box-shadow:inset 1px 0 0 #5f5750;min-width:0}
+.cell:first-child{border-left:0;box-shadow:none}
+.cell b{font-family:"Black Han Sans","Nanum Gothic Coding",sans-serif;font-weight:400;font-size:clamp(22px,4.4vw,36px);line-height:1;color:var(--digit);
+  text-shadow:0 0 10px rgba(229,65,42,.35),2px 2px 0 #1a0a06;font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.cell span{font-size:11px;letter-spacing:.12em;color:var(--ash);font-weight:700}
+.slots{display:flex;gap:4px}
+.slots i{font-style:normal;font-family:"Black Han Sans",sans-serif;font-size:16px;width:20px;text-align:center;color:#5b534b}
+.slots i.have{color:var(--ember)}
+.slots i.on{color:var(--bone);text-shadow:0 0 6px var(--ember)}
+#face{width:48px;height:56px;image-rendering:pixelated;background:#2a2320;border:2px solid var(--steel-lo);box-shadow:inset 0 0 6px #000}
+.keyslot{width:14px;height:20px;border:2px solid #5a534c;border-radius:2px}
+.keyslot.have{background:linear-gradient(135deg,#ff5040,#a00c0c);border-color:#ff9080;box-shadow:0 0 8px rgba(255,60,40,.6)}
+#h-kills{color:var(--bone)}
+.ammo-table{display:grid;grid-template-columns:auto auto;gap:1px 10px;font-size:11px;font-variant-numeric:tabular-nums;color:var(--ash)}
+.ammo-table em{font-style:normal;color:#e8b04a;text-align:right}
+@media (max-width:640px){.cell{padding:2px 6px}.cell span{font-size:10px;letter-spacing:.04em}#face{width:36px;height:42px}.hide-sm{display:none}}
+
+/* 오버레이 화면 */
+.screen{position:absolute;inset:0;display:grid;place-items:center;padding:24px 16px;overflow:auto;
+  background:radial-gradient(120% 90% at 50% 110%,rgba(196,42,28,.40),rgba(12,8,7,.80) 60%),rgba(12,8,7,.35)}
+.panel{max-width:580px;width:100%;display:flex;flex-direction:column;gap:14px}
+.eyebrow{margin:0;font-size:12px;letter-spacing:.22em;color:var(--ember);font-weight:700}
+h1,h2{font-family:"Black Han Sans",sans-serif;font-weight:400;line-height:.92;margin:0;text-wrap:balance;color:var(--bone);
+  text-shadow:0 3px 0 var(--rust),0 6px 0 #250a05,0 0 30px rgba(242,154,46,.35)}
+h1{font-size:clamp(56px,13vw,112px);letter-spacing:-.01em}
+h2{font-size:clamp(40px,9vw,76px)}
+h1 em,h2 em{font-style:normal;color:var(--blood)}
+.brief{margin:0;font-size:15px;line-height:1.65;max-width:62ch;color:#d8cbb2}
+.brief em{font-style:normal;color:var(--ember);font-weight:700}
+button{font:inherit;cursor:pointer}
+.go{align-self:flex-start;font-family:"Black Han Sans",sans-serif;font-size:24px;letter-spacing:.08em;padding:12px 34px 10px;color:#1a0805;
+  background:linear-gradient(180deg,#ffb04a,var(--ember) 45%,#c86a14);border:0;border-radius:2px;box-shadow:0 4px 0 #6a2a08,0 0 24px rgba(242,154,46,.35)}
+.go:hover{filter:brightness(1.08)}
+.go:active{transform:translateY(3px);box-shadow:0 1px 0 #6a2a08}
+.go:disabled{cursor:progress;filter:saturate(.35) brightness(.8)}
+.go:focus-visible,.tbtn:focus-visible{outline:3px solid var(--bone);outline-offset:3px}
+.load{display:flex;flex-direction:column;gap:6px;max-width:420px}
+.load .bar{height:6px;background:#2a1d18;border:1px solid #4a3328}
+.load .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#c42a1c,var(--ember));box-shadow:0 0 10px rgba(242,154,46,.6);transition:width .2s}
+.load p{margin:0;font-size:12px;color:var(--ash)}
+.keys{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px 18px;margin:0;font-size:13px}
+.keys div{display:flex;justify-content:space-between;gap:8px;border-bottom:1px dashed rgba(140,126,108,.35);padding-bottom:4px}
+.keys dt{color:var(--bone);font-weight:700}
+.keys dd{margin:0;color:var(--ash)}
+.note{margin:0;font-size:12px;color:var(--ash);line-height:1.6}
+.stats{display:grid;grid-template-columns:auto 1fr;gap:6px 24px;margin:0;font-size:16px;align-items:baseline}
+.stats dt{color:var(--ash);letter-spacing:.1em;font-size:13px;font-weight:700}
+.stats dd{margin:0;font-family:"Black Han Sans",sans-serif;font-size:26px;color:var(--digit);font-variant-numeric:tabular-nums}
+.stats dd small{font-family:"Nanum Gothic Coding",monospace;font-size:13px;color:var(--ash);margin-left:8px}
+.fatal{color:#ff8a70;font-weight:700}
+
+/* 터치 조작 */
+#touch{position:absolute;right:16px;bottom:16px;display:none;gap:12px;align-items:flex-end}
+@media (pointer:coarse){#touch{display:flex}}
+.tbtn{width:74px;height:74px;border-radius:50%;border:2px solid rgba(236,223,198,.5);background:rgba(196,42,28,.35);color:var(--bone);font-weight:700;font-size:14px;touch-action:none}
+.tbtn.use{width:56px;height:56px;background:rgba(58,54,50,.55)}
+#stick{position:absolute;width:96px;height:96px;margin:-48px 0 0 -48px;border-radius:50%;border:2px solid rgba(236,223,198,.35);pointer-events:none;display:none}
+#stick i{position:absolute;left:50%;top:50%;width:36px;height:36px;margin:-18px 0 0 -18px;border-radius:50%;background:rgba(236,223,198,.35)}
+@media (prefers-reduced-motion:reduce){#msg div{animation:none}.load .bar i{transition:none}}
+</style>
+
+<div id="game">
+  <div id="view">
+    <canvas id="screen" aria-label="게임 화면"></canvas>
+    <div id="cross"></div>
+    <div id="msg" aria-live="polite"></div>
+    <div id="perf"></div>
+    <div id="stick"><i></i></div>
+    <div id="touch"><button class="tbtn use" id="t-use" type="button">사용</button><button class="tbtn" id="t-fire" type="button">발사</button></div>
+
+    <div id="title" class="screen">
+      <div class="panel">
+        <p class="eyebrow">E1M1 · UAC 화성 제3격납고</p>
+        <h1>지옥문<br><em>기지</em></h1>
+        <p class="brief">차원문 실험이 실패했고, 격납고는 임프와 데몬으로 가득 찼습니다. <em>빨간 키카드</em>를 찾아 북쪽 봉쇄문을 열고, 통제실 벽의 <em>출구 스위치</em>를 눌러 탈출하십시오.</p>
+        <div class="load" id="load"><div class="bar"><i id="load-bar"></i></div><p id="load-text">조명과 텍스처를 굽는 중…</p></div>
+        <button class="go" id="start" type="button" disabled>출격</button>
+        <dl class="keys">
+          <div><dt>W A S D</dt><dd>이동</dd></div>
+          <div><dt>마우스 · ← →</dt><dd>회전</dd></div>
+          <div><dt>클릭 · Ctrl</dt><dd>발사</dd></div>
+          <div><dt>E · Space</dt><dd>문 · 스위치</dd></div>
+          <div><dt>1 · 2 · Q</dt><dd>무기 교체</dd></div>
+          <div><dt>Tab · M</dt><dd>자동 지도</dd></div>
+          <div><dt>Shift</dt><dd>달리기</dd></div>
+          <div><dt>F</dt><dd>성능 표시</dd></div>
+        </dl>
+        <p class="note">화면을 클릭하면 마우스가 고정되며, Esc로 해제됩니다. 고정이 막힌 환경에서는 드래그로 회전합니다. 해상도는 프레임 속도에 맞춰 자동으로 조절됩니다. <span id="best"></span></p>
+      </div>
+    </div>
+
+    <div id="dead" class="screen" hidden>
+      <div class="panel">
+        <p class="eyebrow">작전 실패</p>
+        <h2>당신은<br><em>전사했습니다</em></h2>
+        <dl class="stats" id="dead-stats"></dl>
+        <button class="go" id="retry" type="button">재출격</button>
+      </div>
+    </div>
+
+    <div id="win" class="screen" hidden>
+      <div class="panel">
+        <p class="eyebrow">E1M1 완료</p>
+        <h2>격납고<br><em>탈출</em></h2>
+        <dl class="stats" id="win-stats"></dl>
+        <button class="go" id="again" type="button">다시 하기</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="hud">
+    <div class="cell"><b id="h-ammo">50</b><span>탄약</span></div>
+    <div class="cell"><b id="h-hp">100%</b><span>체력</span></div>
+    <div class="cell hide-sm"><div class="slots"><i id="s1" class="have on">1</i><i id="s2">2</i></div><span>무기</span></div>
+    <div class="cell"><canvas id="face" width="48" height="56"></canvas></div>
+    <div class="cell"><b id="h-armor">0%</b><span>방어구</span></div>
+    <div class="cell"><div class="keyslot" id="h-key" title="빨간 키카드"></div><span id="h-kills">0/9</span></div>
+    <div class="cell hide-sm"><div class="ammo-table"><span>총알</span><em id="h-bul">50/200</em><span>산탄</span><em id="h-sh">0/50</em></div></div>
+  </div>
+</div>
